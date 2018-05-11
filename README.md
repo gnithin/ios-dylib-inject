@@ -61,11 +61,11 @@ CODESIGN_ID="<CODE-SIGNING-ID>"
 NOTE: The certificates(code-signing-id) & provisioning-profile need to be valid and related. This will not work otherwise
 
 ## References - 
-- [1](https://coderwall.com/p/qwqpnw/resign-ipa-with-new-cfbundleidentifier-and-certificate) Resigning with new bundle id
-- [2](https://stackoverflow.com/a/32274908/1518924) Using entitlements in the code-signing process (this solves the missing application-identifier problem)
-- [3](https://github.com/Carthage/Carthage/issues/1401#issuecomment-248618314) Code-signing the frameworks 
-- [4](https://stackoverflow.com/a/29932317/1518924) Code-signing the frameworks 
-- [5](https://github.com/depoon/iOSDylibInjectionDemo/blob/master/patchapp.sh)Using optool to inject the dylib onto the ipa
+- [[1](https://coderwall.com/p/qwqpnw/resign-ipa-with-new-cfbundleidentifier-and-certificate)] Resigning with new bundle id
+- [[2](https://stackoverflow.com/a/32274908/1518924)] Using entitlements in the code-signing process (this solves the missing application-identifier problem)
+- [[3](https://github.com/Carthage/Carthage/issues/1401#issuecomment-248618314)] Code-signing the frameworks 
+- [[4](https://stackoverflow.com/a/29932317/1518924)] Code-signing the frameworks 
+- [[5](https://github.com/depoon/iOSDylibInjectionDemo/blob/master/patchapp.sh)] Using optool to inject the dylib onto the ipa
 
 
 ## LICENSE 
