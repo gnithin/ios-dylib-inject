@@ -46,13 +46,13 @@ CODESIGN_ID="<CODE-SIGNING-ID>"
 ### Miscellaneous help for setting up the config
 - Provisioning profile is usually available at path - `~/Library/MobileDevice/Provisioning\ Profiles/`
 - The codesigning-id can be fetched by using the command - 
-  ```
+  ```console
   $ security find-identity -v -p codesigning
   ```
   This will list all of the certificates present in the key-chain
 - When not sure about the entitlements file, you can create one from the provisioning profile itself
 	- Run
-    ```
+    ```console
     $ security cms -D -i "<provisioning-profile>.mobileprovision"
     ```
     - Copy the entire `<dict>` where the `<key>` is `Entitlements`, into a separate file, and wrap that around a `<plist>` tag
