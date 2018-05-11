@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+set -eu
+
+##### Resigning an ad-hoc/enterprise IPA after injecting a dylib with a new bundle-id #####
+
+if ! [ -x "$(command -v grealpath)" ]; then
+    echo "Cannot find grealpath. Please run 'brew install coreutils' to install this!"
+    exit 1
+fi
+
+# These configs need to be fetched from a config file
+# IPA_PATH=""
+# DYLIBS_PATH=""
+# NEW_BUNDLE_IDENTIFIER=""
+# RESIGNED_IPA_NAME=""
+# ENTITLEMENTS_PATH=""
+# PROVISIONING_PATH=""
+# CODESIGN_ID=""
+
+if [ $# -eq 0 ]; then
+    echo "Usage: Please pass a config file as an argument"
+    exit 1
+fi
+
+CONFIG_FILE_PATH="$1"
+echo "Loading $CONFIG_FILE_PATH"
+. "$CONFIG_FILE_PATH"
+
+## TODO: Check for existence of all of these paths
+IPA_PATH=$(grealpath "$IPA_PATH")
+IPA_NAME=$(basename -s .ipa "$IPA_PATH")
+IPA_DIR_PATH=$(dirname "$IPA_PATH")
+PROVISIONING_PATH=$(grealpath "$PROVISIONING_PATH")
+ENTITLEMENTS_PATH=$(grealpath "$ENTITLEMENTS_PATH")
+DYLIBS_PATH=$(grealpath "$DYLIBS_PATH")
+
+###
+echo "All the paths being used here - "
+echo "#######################"
+echo "IPA_PATH:              $IPA_PATH"
+echo "IPA_NAME:              $IPA_NAME"
+echo "IPA_DIR_PATH:          $IPA_DIR_PATH"
+echo "DYLIBS_PATH:           $DYLIBS_PATH"
+echo "PROVISIONING_PATH:     $PROVISIONING_PATH"
+echo "NEW_BUNDLE_IDENTIFIER: $NEW_BUNDLE_IDENTIFIER"
+echo "CODESIGN_ID:           $CODESIGN_ID"
+echo "ENTITLEMENTS_PATH:     $ENTITLEMENTS_PATH"
+echo "RESIGNED_IPA_NAME:     $RESIGNED_IPA_NAME"
+echo "#######################"
+###
+
+IPA_APP_FILE="$IPA_NAME.ipa"
+ZIP_APP_FILE="$IPA_NAME.zip"
+APP_FILE="$IPA_NAME.app"
+APP_PATH="Payload/$APP_FILE"
+
+cd "$IPA_DIR_PATH" || exit 10
+
+# Rename ipa
+cp "$IPA_APP_FILE" "$ZIP_APP_FILE"
+
+# Unzip ipa
+unzip "$ZIP_APP_FILE"
+
+# Delete the zip file 
+rm -rf $ZIP_APP_FILE
+
+# Remove the _CodeSignature
+rm -rf "$APP_PATH/_CodeSignature"
+
+# Remove any plugins if present
+rm -rf "$APP_PATH/PlugIns"
+
+# Remove the existing provisioning profile
+rm -rf "$APP_PATH/embedded.mobileprovision"
+
+# Replace with new in-house profile (with a bundle-id of it's own)
+cp "$PROVISIONING_PATH" "$APP_PATH/embedded.mobileprovision"
+
+# Update the bundle id
+/usr/libexec/PlistBuddy -c "set :CFBundleIdentifier $NEW_BUNDLE_IDENTIFIER"  "$APP_PATH/Info.plist"
+
+# Using optool to inject custom framework
+# Copy the dylib to a directory in app
+cp -rf $DYLIBS_PATH "$APP_PATH/Dylibs"
+
+# Run optool for all the entries in the Dylibs directory
+for DYLIB_FULL_PATH in $APP_PATH/Dylibs/*; do
+    DYLIB_NAME=$(basename "$DYLIB_FULL_PATH")
+    echo "Loading $DYLIB_NAME into $IPA_NAME"
+    optool install -c load -p "@executable_path/Dylibs/$DYLIB_NAME" -t "$APP_PATH/$IPA_NAME"
+done
+
+# Code-sign with entitlements in the provisioning profile
+# Sign all of the entries in the new-lib
+for FILE_NAME in $APP_PATH/Dylibs/*; do
+    echo "Code-signing - $FILE_NAME"
+    codesign -f -s "$CODESIGN_ID" --entitlements "$ENTITLEMENTS_PATH" $FILE_NAME
+done
+
+# Code sign every single file in the Frameworks folder
+# List all of the dylib files and .framework file
+echo "Listing all of the dylib files"
+FRAMEWORK_DIR="$APP_PATH/Frameworks"
+for FILE_NAME in $FRAMEWORK_DIR/*.{dylib,framework}; do
+    echo "Code-signing - $FILE_NAME"
+    codesign -f -s "$CODESIGN_ID" --entitlements "$ENTITLEMENTS_PATH" $FILE_NAME
+done
+
+# Code sign the app file
+echo "Code-signing $APP_PATH"
+codesign -f -s "$CODESIGN_ID" --entitlements "$ENTITLEMENTS_PATH" "$APP_PATH"
+
+# Zip the file back
+echo "Zipping up the contents into the final ipa"
+TIMESTAMP=$(date +%s)
+FINAL_ZIP_FILE_NAME="${TIMESTAMP}-${IPA_NAME}-${RESIGNED_IPA_NAME}"
+zip -qr "$FINAL_ZIP_FILE_NAME" Payload/
+
+echo "Resigning done!"
+echo "Cleaning up!"
+rm -rf "Payload"
+
+echo "Opening the current dir"
+open -R "$FINAL_ZIP_FILE_NAME"
