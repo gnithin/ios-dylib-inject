@@ -1,6 +1,8 @@
-# iOS Inject Dylib and Resign non-app-store IPA
+# ios-dylib-inject
 
-The resign tool is used to inject a dylib into an development/ad-hoc/enterprise signed ipa.
+The ios-dylib-inject script is used to inject a dylib into a development/ad-hoc/enterprise-signed ipa and resign it with a given provisioning profile and code-signing certificate.
+
+This will not work with app-store ipas.
 
 ## Pre-requisite tools
 - optool (Is available with xcode install)
@@ -12,9 +14,12 @@ The resign tool is used to inject a dylib into an development/ad-hoc/enterprise 
 ```bash
 $ ./resign sample-config.conf
 ```
-The `sample-config.conf` file contains all of the required paths for the script.
+- The `sample-config.conf` file contains all of the required paths for the script
+- All of the dylibs should be added into a directory and the directory path must be specified in the config file
+- The new ipa will be in the same directory as the original ipa
 
 ## Config file
+Here are the contents of the config file and their details (NOTE: All the keys are required) -
 ```bash
 # Path to the ipa file
 IPA_PATH="./MyApp.ipa"
@@ -37,6 +42,23 @@ PROVISIONING_PATH="<PATH-TO-PROVISIONING-FILE>.mobileprovision"
 # Code-signing id
 CODESIGN_ID="<CODE-SIGNING-ID>"
 ```
+
+### Miscellaneous help for setting up the config
+- Provisioning profile is usually available at path - `~/Library/MobileDevice/Provisioning\ Profiles/`
+- The codesigning-id can be fetched by using the command - 
+  ```
+  $ security find-identity -v -p codesigning
+  ```
+  This will list all of the certificates present in the key-chain
+- When not sure about the entitlements file, you can create one from the provisioning profile itself
+	- Run
+    ```
+    $ security cms -D -i "<provisioning-profile>.mobileprovision"
+    ```
+    - Copy the entire `<dict>` where the `<key>` is `Entitlements`, into a separate file, and wrap that around a `<plist>` tag
+    - Refer [this](https://stackoverflow.com/questions/28371652/ios-8-1-3-enterprise-distribution-application-is-missing-the-application-ide/32274908#32274908) in case of issues
+
+NOTE: The certificates(code-signing-id) & provisioning-profile need to be valid and related. This will not work otherwise
 
 ## References - 
 - [1](https://coderwall.com/p/qwqpnw/resign-ipa-with-new-cfbundleidentifier-and-certificate) Resigning with new bundle id
