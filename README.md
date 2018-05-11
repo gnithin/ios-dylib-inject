@@ -66,3 +66,7 @@ NOTE: The certificates(code-signing-id) & provisioning-profile need to be valid 
 - [3](https://github.com/Carthage/Carthage/issues/1401#issuecomment-248618314) Code-signing the frameworks 
 - [4](https://stackoverflow.com/a/29932317/1518924) Code-signing the frameworks 
 - [5](https://github.com/depoon/iOSDylibInjectionDemo/blob/master/patchapp.sh)Using optool to inject the dylib onto the ipa
+
+
+## LICENSE 
+See LICENSE file 
