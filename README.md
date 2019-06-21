@@ -21,7 +21,7 @@ $ ./resign sample-config.conf
 ## Config file
 Here are the contents of the config file and their details (NOTE: All the keys are required) -
 ```bash
-# Path to the ipa file
+# Path to the ipa file. Make sure that app-name and the ipa name are the same.
 IPA_PATH="./MyApp.ipa"
 
 # Path to the dylibs directory which contains all of the dylibs to be injected
